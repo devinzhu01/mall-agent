@@ -60,14 +60,14 @@ public class AgentOrchestrator {
             MemoryContext ctx = memory.load(userId, sessionId);
 
             boolean single = "single".equalsIgnoreCase(props.getMode());
-            RouteDecision route = single ? RouteDecision.single() : router.route(ctx, message, tracer);
-            tracer.step("route", single ? "single-agent" : "intent=" + route.intent() + " category=" + route.category());
+            RouteDecision route = single ? RouteDecision.allTools() : router.route(ctx, message, tracer);
+            tracer.step("route", route.intent() == null ? (single ? "single-agent" : "undecided->all-tools") : "intent=" + route.intent() + " category=" + route.category());
 
             Flux<String> answer;
             if (route.intent() == Intent.CHITCHAT) {
                 answer = Flux.just(route.reply());
             } else {
-                Expert expert = experts.forIntent(single ? Intent.KNOWLEDGE : route.intent(), ctx, route.category(), tracer);
+                Expert expert = experts.forIntent(route.intent(), ctx, route.category(), tracer);
                 tracer.step("expert", expert.name());
                 var tools = toolBox.build(expert.toolBeans(), tracer);
                 answer = expertChat.stream(expert.systemPrompt(), ctx.recent(), message, tools, userId, tracer);

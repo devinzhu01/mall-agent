@@ -32,4 +32,9 @@ class ConfigGuardsTest {
     void adminTokenHasNoWellKnownDefault() {
         assertThat(env.getProperty("agent.admin-token", "")).isNotEqualTo("change-me");
     }
+
+    @Test
+    void rateLimitResponsesAreRetriedByTheModelClients() {
+        assertThat(env.getProperty("spring.ai.retry.on-http-codes")).contains("429");
+    }
 }

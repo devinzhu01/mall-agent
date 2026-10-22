@@ -12,6 +12,10 @@ spring:
       base-url: https://dashscope.aliyuncs.com/compatible-mode   # 千问的 OpenAI 兼容端点
       chat.options: { model: qwen-plus, temperature: 0.3 }
       embedding.options: { model: text-embedding-v3, dimensions: 1024 }
+    retry:                       # 千问限流(429)是瞬时的,默认不重试;embedding/对话调用在这里统一退避重试
+      on-http-codes: 429
+      max-attempts: 3
+      backoff: { initial-interval: 1s, multiplier: 2, max-interval: 8s }
 
 agent:
   mode: multi                     # multi=Router+专家;single=单 Agent(评测对照)

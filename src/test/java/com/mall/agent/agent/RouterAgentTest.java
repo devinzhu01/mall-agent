@@ -39,18 +39,18 @@ class RouterAgentTest {
     }
 
     @Test
-    void routerFallsBackToKnowledgeOnError() {
+    void routerFailureFallsBackToAllToolsExpert() {
         when(llm.json(any(), any(), any(), any(), any(), eq(RouterAgent.Route.class)))
                 .thenThrow(new IllegalStateException("bad json"));
         RouteDecision d = router.route(emptyCtx, "???", Tracer.NOOP);
-        assertThat(d.intent()).isEqualTo(Intent.KNOWLEDGE);
+        assertThat(d.intent()).isNull();   // null = 不确定意图,交给拥有全部工具的专家,而不是只读的知识库专家
         assertThat(d.category()).isNull();
     }
 
     @Test
-    void unknownIntentFallsBackToKnowledge() {
+    void unknownIntentFallsBackToAllToolsExpert() {
         llmReturns(new RouterAgent.Route("SOMETHING_ELSE", null, null));
-        assertThat(router.route(emptyCtx, "x", Tracer.NOOP).intent()).isEqualTo(Intent.KNOWLEDGE);
+        assertThat(router.route(emptyCtx, "x", Tracer.NOOP).intent()).isNull();
     }
 
     @Test

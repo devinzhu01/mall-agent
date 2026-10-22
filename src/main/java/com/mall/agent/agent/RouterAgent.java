@@ -51,6 +51,9 @@ public class RouterAgent {
         try {
             Route r = llm.json(tracer, "route", props.getRouterModel(), SYSTEM, userPrompt(ctx, message), Route.class);
             Intent intent = parseIntent(r.intent());
+            if (intent == null) {
+                return RouteDecision.allTools();
+            }
             String category = r.category() != null && CATEGORIES.contains(r.category()) ? r.category() : null;
             String reply = null;
             if (intent == Intent.CHITCHAT) {
@@ -58,8 +61,8 @@ public class RouterAgent {
             }
             return new RouteDecision(intent, category, reply);
         } catch (Exception e) {
-            log.warn("routing failed, falling back to KNOWLEDGE: {}", e.toString());
-            return new RouteDecision(Intent.KNOWLEDGE, null, null);
+            log.warn("routing failed, falling back to the all-tools expert: {}", e.toString());
+            return RouteDecision.allTools();
         }
     }
 
@@ -67,7 +70,7 @@ public class RouterAgent {
         try {
             return Intent.valueOf(raw == null ? "" : raw.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            return Intent.KNOWLEDGE;
+            return null;
         }
     }
 

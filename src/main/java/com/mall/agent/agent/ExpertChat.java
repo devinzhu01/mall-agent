@@ -51,6 +51,9 @@ public class ExpertChat {
                 // 兼容端点默认流式不返回 usage,需要显式要求,才能统计 token
                 .options(OpenAiChatOptions.builder().streamUsage(true).build())
                 .stream().chatResponse()
+                // 429 在流刚开始时就会返回,还没有输出任何内容,重试是安全的
+                .retryWhen(reactor.util.retry.Retry.backoff(2, java.time.Duration.ofSeconds(1))
+                        .filter(com.mall.agent.llm.Llm::isRateLimited))
                 .doOnNext(r -> {
                     var u = r.getMetadata() == null ? null : r.getMetadata().getUsage();
                     if (u != null && u.getTotalTokens() != null && u.getTotalTokens() > 0) {

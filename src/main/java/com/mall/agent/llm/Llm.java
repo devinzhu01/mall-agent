@@ -21,6 +21,7 @@ public class Llm {
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private static final int MAX_ATTEMPTS = 3;
 
     private final ChatClient client;
     private final ObjectProvider<ChatCache> cache;
@@ -48,7 +49,7 @@ public class Llm {
         if (model != null) {
             options.model(model);
         }
-        ChatResponse response = prompt.options(options.build()).call().chatResponse();
+        ChatResponse response = callWithRateLimitRetry(() -> prompt.options(options.build()).call().chatResponse());
         String content = response.getResult().getOutput().getText();
         tracer.llm(stage, model == null ? "default" : model, System.currentTimeMillis() - start,
                 usage(response, system + user, content));
@@ -72,9 +73,41 @@ public class Llm {
         int start = raw.indexOf('{');
         int end = raw.lastIndexOf('}');
         if (start < 0 || end < start) {
+            // "没有内容"时模型常直接答一个空数组 [],按空对象处理
+            if (raw.matches("(?s).*\\[\\s*\\].*")) {
+                return "{}";
+            }
             throw new IllegalArgumentException("no json object");
         }
         return raw.substring(start, end + 1);
+    }
+
+    /** 千问的 429(请求限流)是瞬时的,Spring AI 默认把它当不可重试错误,这里补一个短退避重试。 */
+    public static boolean isRateLimited(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t.getMessage() != null && (t.getMessage().contains("HTTP 429") || t.getMessage().contains("limit_requests"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static <T> T callWithRateLimitRetry(java.util.function.Supplier<T> call) {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                return call.get();
+            } catch (RuntimeException e) {
+                if (attempt >= MAX_ATTEMPTS || !isRateLimited(e)) {
+                    throw e;
+                }
+                try {
+                    Thread.sleep(1000L * attempt);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+            }
+        }
     }
 
     private static Usage usage(ChatResponse response, String prompt, String completion) {
