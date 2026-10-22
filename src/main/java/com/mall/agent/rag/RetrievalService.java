@@ -55,6 +55,7 @@ public class RetrievalService {
         List<Hit> fused = Rrf.fuse(recalls, RRF_K, Math.max(cfg.getDenseTopN(), cfg.getSparseTopN()));
         tracer.step("rag.recall", recalls.size() + " lists -> " + fused.size() + " fused candidates");
         if (fused.isEmpty()) {
+            tracer.step("rag.refused", "no sufficiently relevant knowledge");
             return new RetrievalResult(List.of(), true, false, queries);
         }
 
@@ -68,6 +69,7 @@ public class RetrievalService {
             tracer.step("rag.rerank", top.isEmpty() ? "no hits"
                     : "top score=" + top.get(0).score() + (skipped ? " (rerank skipped)" : ""));
             if (!skipped && (top.isEmpty() || top.get(0).score() < cfg.getRefuseThreshold())) {
+                tracer.step("rag.refused", "no sufficiently relevant knowledge");
                 return new RetrievalResult(List.of(), true, false, queries);
             }
         } else {
