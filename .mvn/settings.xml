@@ -1,0 +1,10 @@
+<settings>
+  <!-- repo.maven.apache.org 在部分网络下不可达,统一走阿里云镜像;不需要时删除 .mvn/maven.config 即可 -->
+  <mirrors>
+    <mirror>
+      <id>aliyun</id>
+      <mirrorOf>*</mirrorOf>
+      <url>https://maven.aliyun.com/repository/public</url>
+    </mirror>
+  </mirrors>
+</settings>

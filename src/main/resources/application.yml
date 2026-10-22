@@ -1,0 +1,50 @@
+spring:
+  application.name: mall-agent
+  datasource:
+    url: jdbc:mysql://localhost:3306/mall_agent?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:}
+  data.redis: { host: localhost, port: 6379 }
+  sql.init.mode: never            # 表和数据由你手工建;测试用 H2 时会覆盖为 embedded
+  ai:
+    openai:
+      api-key: ${DASHSCOPE_API_KEY:}
+      base-url: https://dashscope.aliyuncs.com/compatible-mode   # 千问的 OpenAI 兼容端点
+      chat.options: { model: qwen-plus, temperature: 0.3 }
+      embedding.options: { model: text-embedding-v3, dimensions: 1024 }
+
+agent:
+  mode: multi                     # multi=Router+专家;single=单 Agent(评测对照)
+  router-model: qwen-turbo        # Router 只做分类,用便宜的小模型
+  tool: { max-failures: 3 }       # 单次请求内工具失败上限,超过后让模型向用户澄清
+  memory: { window-messages: 20, summarize-threshold: 16, keep-recent: 6, ttl-minutes: 120 }
+  rag:
+    collection: mall_kb
+    qdrant-host: localhost
+    qdrant-port: 6334
+    dense-top-n: 20
+    sparse-top-n: 20
+    rerank-top-k: 4
+    refuse-threshold: 0.3
+    rewrite-enabled: true
+    hybrid-enabled: true
+    sparse-enabled: true
+    rerank-enabled: true
+    rerank-model: gte-rerank
+    rerank-url: https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank
+    embedding-batch-size: 10
+    sync-on-startup: true
+    upload-dir: ./kb-uploads
+  logistics: { base-url: "http://localhost:8080/mock/logistics", timeout-ms: 1500, mock-fail-rate: 0.3 }
+  admin-token: ${ADMIN_TOKEN:change-me}
+  eval: { dataset-dir: src/test/resources/eval, use-cache: true }
+
+resilience4j:
+  circuitbreaker.instances.logistics:
+    sliding-window-size: 5
+    minimum-number-of-calls: 5
+    failure-rate-threshold: 50
+    wait-duration-in-open-state: 10s
+  retry.instances.logistics: { max-attempts: 2, wait-duration: 100ms }
+
+management.endpoints.web.exposure.include: health,metrics,prometheus
