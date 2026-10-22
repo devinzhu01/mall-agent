@@ -26,6 +26,11 @@ public class LogisticsTools {
         OrderTools.requireOrderNo(orderNo);
         OrderView order = orders.findByNoAndUser(orderNo, userId).orElseThrow(OrderTools::notFound);
 
+        if (order.shippedAt() == null) {
+            // 没发货就没有物流:不调用外部接口,更不会有编造轨迹的机会
+            return ToolResult.ok(Map.of("orderStatus", order.status(), "available", false,
+                    "message", "订单尚未发货,当前状态为 " + order.status() + ",发货后才有物流信息")).toJson();
+        }
         LogisticsInfo info = client.query(orderNo);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("orderStatus", order.status());

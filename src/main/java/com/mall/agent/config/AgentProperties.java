@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class AgentProperties {
     private String mode = "multi";
     private String routerModel = "qwen-turbo";
-    private String adminToken = "change-me";
+    private String adminToken = "";
     private Tool tool = new Tool();
     private Memory memory = new Memory();
     private Rag rag = new Rag();

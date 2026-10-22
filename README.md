@@ -20,7 +20,7 @@ docker compose up -d
 # 3. 环境变量
 export DASHSCOPE_API_KEY=sk-xxx        # 千问 key
 export DB_USER=root DB_PASSWORD=xxx    # MySQL 账号密码
-export ADMIN_TOKEN=change-me           # /admin/* 接口的令牌
+export ADMIN_TOKEN=<自己生成的随机串>   # /admin/* 接口令牌;不配置或为 change-me 时管理接口一律拒绝
 
 # 4. 启动(首次启动会把 src/main/resources/kb 下的文档向量化写入 Qdrant,之后文件没变就跳过)
 mvn spring-boot:run
@@ -38,7 +38,7 @@ mvn spring-boot:run
 | 跑评测 | `mvn spring-boot:run -Dspring-boot.run.profiles=eval`(结果在 `eval-reports/`) |
 | 只跑评测的某几部分 | 追加 `-Dspring-boot.run.arguments=--eval.sections=retrieval,routing` |
 | 切到单 Agent 模式 | `agent.mode: single` |
-| 上传/更新知识库文档 | `curl -H "X-Admin-Token: change-me" -F file=@return-policy__v3.md -F category=售后 localhost:8080/admin/kb/upload` |
+| 上传/更新知识库文档 | `curl -H "X-Admin-Token: $ADMIN_TOKEN" -F file=@return-policy__v3.md -F category=售后 localhost:8080/admin/kb/upload` |
 
 接口:`POST /chat`(头 `X-User-Id`,体 `{"sessionId","message"}`,SSE 流式)、`GET|DELETE /memory/preferences`、`/admin/kb/*`、`/actuator/prometheus`。
 

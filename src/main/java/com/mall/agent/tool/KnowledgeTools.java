@@ -42,6 +42,11 @@ public class KnowledgeTools {
             data.put("message", "知识库中没有相关信息");
         } else {
             data.put("answerable", true);
+            // 重排服务不可用时没有可信的相关性分数,让模型自己判断,答不上就如实说没有相关信息
+            data.put("relevanceVerified", !r.rerankSkipped());
+            if (r.rerankSkipped()) {
+                data.put("note", "相关性未经验证:如果下列内容不能直接回答用户的问题,请说明知识库中没有相关信息,不要硬答");
+            }
             data.put("passages", r.hits().stream()
                     .map(h -> Map.of("source", h.titlePath(), "text", h.text())).toList());
         }

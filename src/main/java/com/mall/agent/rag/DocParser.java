@@ -88,7 +88,7 @@ public class DocParser {
         try (InputStream in = Files.newInputStream(file); XWPFDocument doc = new XWPFDocument(in)) {
             for (IBodyElement el : doc.getBodyElements()) {
                 if (el instanceof XWPFParagraph p) {
-                    int level = headingLevel(p.getStyle());
+                    int level = headingLevel(styleName(doc, p.getStyle()));
                     if (level > 0) {
                         b.heading(level, p.getText().trim());
                     } else {
@@ -103,9 +103,16 @@ public class DocParser {
         }
     }
 
+    /** 样式 id 在中文 Word 里可能只是 "1"/"2",真正可靠的是样式名称(heading 1 / 标题 1);查不到名称时退回用 id。 */
+    private static String styleName(XWPFDocument doc, String styleId) {
+        if (styleId == null) return null;
+        var style = doc.getStyles() == null ? null : doc.getStyles().getStyle(styleId);
+        return style != null && style.getName() != null ? style.getName() : styleId;
+    }
+
     private static int headingLevel(String style) {
         if (style == null) return 0;
-        Matcher m = Pattern.compile("(?i)heading\\s*(\\d)").matcher(style);
+        Matcher m = Pattern.compile("(?i)(?:heading|标题)\\s*(\\d)").matcher(style);
         return m.find() ? Integer.parseInt(m.group(1)) : 0;
     }
 

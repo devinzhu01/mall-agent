@@ -101,9 +101,37 @@ public class IngestionService {
         return walk(dir, true);
     }
 
+    /**
+     * 删除文档:向量、登记行、上传目录里的源文件一起删,否则下次启动同步又会把它加回来。
+     * 内置知识库(kb-dir)里的文档属于代码仓库内容,不允许通过接口删除。
+     */
     public void remove(String docId) {
+        if (!findFiles(Path.of(props.getRag().getKbDir()), docId).isEmpty()) {
+            throw new IllegalArgumentException("内置知识库文档不能通过接口删除,请从 kb-dir 中移除文件后重新部署: " + docId);
+        }
         store.deleteByDocId(docId);
         docs.delete(docId);
+        for (Path file : findFiles(Path.of(props.getRag().getUploadDir()), docId)) {
+            try {
+                Files.delete(file);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+    }
+
+    private static List<Path> findFiles(Path dir, String docId) {
+        if (!Files.isDirectory(dir)) {
+            return List.of();
+        }
+        try (Stream<Path> files = Files.walk(dir, 2)) {
+            return files.filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().startsWith(docId + "__v")
+                            && KB_FILE.matcher(p.getFileName().toString()).matches())
+                    .toList();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private List<IngestResult> walk(Path dir, boolean force) {

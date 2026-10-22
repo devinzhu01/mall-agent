@@ -5,12 +5,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
 
 /** 启动时把内置知识库目录和上传目录增量同步一次(文件没变就全部跳过)。Qdrant 不可用时只告警,不阻止启动。 */
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class KbSyncRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(KbSyncRunner.class);

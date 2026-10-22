@@ -17,9 +17,12 @@ import java.security.MessageDigest;
 public class AdminTokenFilter extends OncePerRequestFilter {
 
     private final byte[] expected;
+    private final boolean configured;
 
-    public AdminTokenFilter(@Value("${agent.admin-token:change-me}") String adminToken) {
+    public AdminTokenFilter(@Value("${agent.admin-token:}") String adminToken) {
         this.expected = adminToken.getBytes(StandardCharsets.UTF_8);
+        // 没配置或还是众所周知的占位值时,管理接口一律拒绝,而不是放行默认口令
+        this.configured = !adminToken.isBlank() && !adminToken.equals("change-me");
     }
 
     @Override
@@ -32,7 +35,7 @@ public class AdminTokenFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String token = req.getHeader("X-Admin-Token");
         // 常量时间比较,避免通过响应时间猜 token
-        if (token != null && MessageDigest.isEqual(expected, token.getBytes(StandardCharsets.UTF_8))) {
+        if (configured && token != null && MessageDigest.isEqual(expected, token.getBytes(StandardCharsets.UTF_8))) {
             chain.doFilter(req, res);
             return;
         }

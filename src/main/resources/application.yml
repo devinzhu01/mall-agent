@@ -38,7 +38,10 @@ agent:
     upload-dir: ./kb-uploads        # 管理接口上传的文件目录,结构同 kb-dir
     kb-dir: src/main/resources/kb   # 内置知识库目录:<类别>/<docId>__v<N>.<md|docx|pdf>
   logistics: { base-url: "http://localhost:8080/mock/logistics", timeout-ms: 1500, mock-fail-rate: 0.3 }
-  admin-token: ${ADMIN_TOKEN:change-me}
+  admin-token: ${ADMIN_TOKEN:}   # 必须通过环境变量配置;为空或 change-me 时 /admin/** 全部拒绝
   eval: { dataset-dir: src/test/resources/eval, use-cache: true, cache-dir: eval-cache }
+
+# 流式回答含工具循环+检索+重排,可能超过 Tomcat 默认 30 秒异步超时
+spring.mvc.async.request-timeout: 120s
 
 management.endpoints.web.exposure.include: health,metrics,prometheus

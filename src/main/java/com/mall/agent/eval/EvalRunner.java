@@ -27,6 +27,8 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -53,6 +55,7 @@ import java.util.stream.Stream;
  *  e2e       — 端到端问答,LLM 裁判按 rubric 打分。
  */
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE)
 @Profile("eval")
 public class EvalRunner implements ApplicationRunner {
 
