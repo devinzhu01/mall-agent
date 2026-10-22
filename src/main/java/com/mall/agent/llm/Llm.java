@@ -2,17 +2,19 @@ package com.mall.agent.llm;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mall.agent.eval.ChatCache;
 import com.mall.agent.trace.Tracer;
 import com.mall.agent.trace.Usage;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
  * 非流式的"一问一答"模型调用,供改写、路由、摘要、偏好抽取、评测裁判等内部步骤使用。
  * 统一做三件事:温度固定为 0、从响应里取 token 用量记入 Trace、把 JSON 输出解析成对象。
- * (面向用户的流式回答不走这里,见 AgentOrchestrator。)
+ * (面向用户的流式回答不走这里,见 ExpertChat。)评测配置下会经过 ChatCache,线上没有缓存。
  */
 @Component
 public class Llm {
@@ -21,13 +23,25 @@ public class Llm {
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     private final ChatClient client;
+    private final ObjectProvider<ChatCache> cache;
 
-    public Llm(ChatClient.Builder builder) {
+    public Llm(ChatClient.Builder builder, ObjectProvider<ChatCache> cache) {
         this.client = builder.build();
+        this.cache = cache;
     }
 
     /** model 为空则用 yml 里配置的默认对话模型。 */
     public String text(Tracer tracer, String stage, String model, String system, String user) {
+        ChatCache cached = cache.getIfAvailable();
+        String key = cached == null ? null : ChatCache.key(String.valueOf(model), system, user);
+        if (key != null) {
+            var hit = cached.get(key);
+            if (hit.isPresent()) {
+                tracer.step("llm.cache-hit", stage);
+                return hit.get();
+            }
+        }
+
         long start = System.currentTimeMillis();
         var prompt = client.prompt().system(system).user(user);
         OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().temperature(0.0);
@@ -38,6 +52,9 @@ public class Llm {
         String content = response.getResult().getOutput().getText();
         tracer.llm(stage, model == null ? "default" : model, System.currentTimeMillis() - start,
                 usage(response, system + user, content));
+        if (key != null) {
+            cached.put(key, content);
+        }
         return content;
     }
 

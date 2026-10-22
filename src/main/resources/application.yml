@@ -39,6 +39,6 @@ agent:
     kb-dir: src/main/resources/kb   # 内置知识库目录:<类别>/<docId>__v<N>.<md|docx|pdf>
   logistics: { base-url: "http://localhost:8080/mock/logistics", timeout-ms: 1500, mock-fail-rate: 0.3 }
   admin-token: ${ADMIN_TOKEN:change-me}
-  eval: { dataset-dir: src/test/resources/eval, use-cache: true }
+  eval: { dataset-dir: src/test/resources/eval, use-cache: true, cache-dir: eval-cache }
 
 management.endpoints.web.exposure.include: health,metrics,prometheus

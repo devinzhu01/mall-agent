@@ -59,5 +59,7 @@ public class AgentProperties {
     @Data public static class Eval {
         private String datasetDir = "src/test/resources/eval";
         private boolean useCache = true;
+        private String cacheDir = "eval-cache";
+        private String judgeModel;   // 为空则用默认对话模型
     }
 }
