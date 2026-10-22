@@ -19,7 +19,7 @@ spring:
 
 agent:
   mode: multi                     # multi=Router+专家;single=单 Agent(评测对照)
-  router-model: qwen-turbo        # Router 只做分类,用便宜的小模型
+  router-model: qwen-plus         # Router 只做分类,想省钱可换小模型(如 qwen-turbo),但要确认该模型有额度,否则会 429 并降级
   tool: { max-failures: 3 }       # 单次请求内工具失败上限,超过后让模型向用户澄清
   memory: { window-messages: 20, summarize-threshold: 16, keep-recent: 6, ttl-minutes: 120, max-chars: 6000 }
   rag:

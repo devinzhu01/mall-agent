@@ -70,6 +70,7 @@ public class AgentOrchestrator {
                 Expert expert = experts.forIntent(route.intent(), ctx, route.category(), tracer);
                 tracer.step("expert", expert.name());
                 var tools = toolBox.build(expert.toolBeans(), tracer);
+                tracer.step("tools.offered", java.util.Arrays.stream(tools).map(t -> t.getToolDefinition().name()).toList().toString());
                 answer = expertChat.stream(expert.systemPrompt(), ctx.recent(), message, tools, userId, tracer);
             }
             return new Run(tracer.traceId(), finishWith(answer, userId, sessionId, message, tracer), tracer, route);

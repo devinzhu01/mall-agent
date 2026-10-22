@@ -70,6 +70,7 @@ class RouterAgentTest {
     @Test
     void routerUsesConfiguredRouterModel() {
         llmReturns(new RouterAgent.Route("ORDER", null, null));
+        props.setRouterModel("qwen-turbo");
         router.route(emptyCtx, "我的订单", Tracer.NOOP);
         verify(llm).json(any(), eq("route"), eq("qwen-turbo"), any(), any(), eq(RouterAgent.Route.class));
     }

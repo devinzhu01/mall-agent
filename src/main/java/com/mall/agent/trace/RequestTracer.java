@@ -68,7 +68,8 @@ public class RequestTracer implements Tracer {
                 .findFirst().orElse("-");
         String tools = steps.stream().filter(s -> s.type().equals("tool"))
                 .map(s -> s.name() + (s.ok() ? "" : "(failed)")).collect(Collectors.joining(","));
-        log.info("traceId={} route={} tools=[{}] tokens={} ms={}", traceId, route, tools, trace.totalTokens(), totalMillis);
+        String offered = steps.stream().filter(s -> s.name().equals("tools.offered")).map(TraceStep::detail).findFirst().orElse("-");
+        log.info("traceId={} route={} offered={} tools=[{}] tokens={} ms={}", traceId, route, offered, tools, trace.totalTokens(), totalMillis);
         return trace;
     }
 }
