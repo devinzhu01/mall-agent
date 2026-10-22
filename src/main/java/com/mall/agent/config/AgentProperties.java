@@ -32,6 +32,7 @@ public class AgentProperties {
         private String collection = "mall_kb";
         private String qdrantHost = "localhost";
         private int qdrantPort = 6334;
+        private int denseDim = 1024;
         private int denseTopN = 20;
         private int sparseTopN = 20;
         private int rerankTopK = 4;

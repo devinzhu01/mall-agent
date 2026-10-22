@@ -22,6 +22,7 @@ agent:
     collection: mall_kb
     qdrant-host: localhost
     qdrant-port: 6334
+    dense-dim: 1024
     dense-top-n: 20
     sparse-top-n: 20
     rerank-top-k: 4
