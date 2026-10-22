@@ -14,6 +14,12 @@ public class ToolException extends RuntimeException {
         this.hint = hint;
     }
 
+    public String code() { return code; }
+
+    public boolean retryable() { return retryable; }
+
+    public String hint() { return hint; }
+
     public ToolResult toResult() {
         return ToolResult.fail(code, getMessage(), retryable, hint);
     }

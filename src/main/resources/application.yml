@@ -39,12 +39,4 @@ agent:
   admin-token: ${ADMIN_TOKEN:change-me}
   eval: { dataset-dir: src/test/resources/eval, use-cache: true }
 
-resilience4j:
-  circuitbreaker.instances.logistics:
-    sliding-window-size: 5
-    minimum-number-of-calls: 5
-    failure-rate-threshold: 50
-    wait-duration-in-open-state: 10s
-  retry.instances.logistics: { max-attempts: 2, wait-duration: 100ms }
-
 management.endpoints.web.exposure.include: health,metrics,prometheus
