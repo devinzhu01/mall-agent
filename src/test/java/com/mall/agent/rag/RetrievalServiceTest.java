@@ -140,4 +140,16 @@ class RetrievalServiceTest {
         verify(reranker).rerank(anyString(), org.mockito.ArgumentMatchers.argThat(
                 (List<Hit> l) -> l.stream().map(Hit::chunkId).toList().containsAll(List.of("A", "B", "C"))), anyInt());
     }
+
+    @Test
+    void categoryFilterRetriesWithoutCategoryWhenNothingFound() {
+        when(store.denseSearch(any(), eq(new KbFilter(true, "物流")), anyInt())).thenReturn(List.of());
+        when(store.sparseSearch(any(), eq(new KbFilter(true, "物流")), anyInt())).thenReturn(List.of());
+
+        RetrievalResult r = service.retrieve("发票怎么开", List.of(), "物流", Tracer.NOOP);
+
+        assertThat(r.refused()).isFalse();
+        verify(store, times(2)).denseSearch(any(), eq(new KbFilter(true, null)), anyInt());
+        verify(rewriter, times(1)).rewrite(anyString(), anyList(), any());   // 改写只做一次
+    }
 }

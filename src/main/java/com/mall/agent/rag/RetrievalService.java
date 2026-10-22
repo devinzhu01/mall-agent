@@ -38,12 +38,29 @@ public class RetrievalService {
     }
 
     public RetrievalResult retrieve(String query, List<ChatMessage> history, String category, Tracer tracer) {
-        AgentProperties.Rag cfg = props.getRag();
-
-        List<String> queries = cfg.isRewriteEnabled() ? rewriter.rewrite(query, history, tracer) : List.of(query);
+        List<String> queries = props.getRag().isRewriteEnabled() ? rewriter.rewrite(query, history, tracer) : List.of(query);
         tracer.step("rag.queries", String.join(" | ", queries));
 
+        RetrievalResult result = search(queries, category, tracer);
+        // Router 的类别可能判错:带类别过滤查不到时,放开类别再查一次,宁可多查也不漏答
+        if (result.refused() && category != null && !category.isBlank()) {
+            tracer.step("rag.category-fallback", "category=" + category + " found nothing, retrying without category");
+            result = search(queries, null, tracer);
+        }
+        if (result.refused()) {
+            tracer.step("rag.refused", "no sufficiently relevant knowledge");
+        }
+        return result;
+    }
+
+    public RetrievalResult retrieve(String query, List<ChatMessage> history, String category) {
+        return retrieve(query, history, category, Tracer.NOOP);
+    }
+
+    private RetrievalResult search(List<String> queries, String category, Tracer tracer) {
+        AgentProperties.Rag cfg = props.getRag();
         KbFilter filter = new KbFilter(true, category);
+
         List<float[]> vectors = embedding.embed(queries);
         List<List<Hit>> recalls = new ArrayList<>();
         for (int i = 0; i < queries.size(); i++) {
@@ -55,7 +72,6 @@ public class RetrievalService {
         List<Hit> fused = Rrf.fuse(recalls, RRF_K, Math.max(cfg.getDenseTopN(), cfg.getSparseTopN()));
         tracer.step("rag.recall", recalls.size() + " lists -> " + fused.size() + " fused candidates");
         if (fused.isEmpty()) {
-            tracer.step("rag.refused", "no sufficiently relevant knowledge");
             return new RetrievalResult(List.of(), true, false, queries);
         }
 
@@ -69,17 +85,12 @@ public class RetrievalService {
             tracer.step("rag.rerank", top.isEmpty() ? "no hits"
                     : "top score=" + top.get(0).score() + (skipped ? " (rerank skipped)" : ""));
             if (!skipped && (top.isEmpty() || top.get(0).score() < cfg.getRefuseThreshold())) {
-                tracer.step("rag.refused", "no sufficiently relevant knowledge");
                 return new RetrievalResult(List.of(), true, false, queries);
             }
         } else {
             top = fused.subList(0, Math.min(cfg.getRerankTopK(), fused.size()));
         }
         return new RetrievalResult(expandToParents(top), false, skipped, queries);
-    }
-
-    public RetrievalResult retrieve(String query, List<ChatMessage> history, String category) {
-        return retrieve(query, history, category, Tracer.NOOP);
     }
 
     /** 子块命中后换成父块文本;多个子块指向同一父块时只保留分数最高的一个。 */

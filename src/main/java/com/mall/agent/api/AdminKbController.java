@@ -3,9 +3,7 @@ package com.mall.agent.api;
 import com.mall.agent.config.AgentProperties;
 import com.mall.agent.rag.IngestionService;
 import com.mall.agent.rag.IngestionService.IngestResult;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,8 +60,4 @@ public class AdminKbController {
         return Map.of("documents", n);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> badRequest(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("code", "BAD_REQUEST", "message", e.getMessage()));
-    }
 }
