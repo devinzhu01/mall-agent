@@ -19,6 +19,7 @@
     <spring-ai.version>1.0.9</spring-ai.version>
     <qdrant.version>1.15.0</qdrant.version>
     <grpc.version>1.65.1</grpc.version>
+    <argLine>-Dfile.encoding=UTF-8</argLine>
   </properties>
 
   <dependencyManagement>
