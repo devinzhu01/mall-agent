@@ -55,6 +55,7 @@ public class RequestTracer implements Tracer {
     @Override
     public void tool(String name, String argsJson, long millis, boolean ok) {
         steps.add(new TraceStep("tool", name, Masker.mask(argsJson), millis, ok));
+        log.info("traceId={} tool={} ok={} ms={}", traceId, name, ok, millis);
         meters.counter("agent.tool.calls", "tool", name, "ok", String.valueOf(ok)).increment();
         meters.timer("agent.stage.duration", "stage", "tool").record(Duration.ofMillis(millis));
     }
@@ -64,12 +65,22 @@ public class RequestTracer implements Tracer {
         long totalMillis = Duration.ofNanos(System.nanoTime() - startNanos).toMillis();
         Trace trace = new Trace(traceId, List.copyOf(steps), totalMillis, totalTokens.get());
         meters.timer("agent.stage.duration", "stage", "total").record(Duration.ofMillis(totalMillis));
-        String route = steps.stream().filter(s -> s.name().equals("route")).map(TraceStep::detail)
-                .findFirst().orElse("-");
+        log.info(logLine(totalMillis));
+        return trace;
+    }
+
+    /** route 取"路由决定"那一步(type=step),不是路由的模型调用(type=llm,阶段名也叫 route)。 */
+    String logLine(long totalMillis) {
+        String route = detailOf("step", "route");
+        String offered = detailOf("step", "tools.offered");
         String tools = steps.stream().filter(s -> s.type().equals("tool"))
                 .map(s -> s.name() + (s.ok() ? "" : "(failed)")).collect(Collectors.joining(","));
-        String offered = steps.stream().filter(s -> s.name().equals("tools.offered")).map(TraceStep::detail).findFirst().orElse("-");
-        log.info("traceId={} route={} offered={} tools=[{}] tokens={} ms={}", traceId, route, offered, tools, trace.totalTokens(), totalMillis);
-        return trace;
+        return "traceId=" + traceId + " route=" + route + " offered=" + offered + " tools=[" + tools
+                + "] tokens=" + totalTokens.get() + " ms=" + totalMillis;
+    }
+
+    private String detailOf(String type, String name) {
+        return steps.stream().filter(s -> s.type().equals(type) && s.name().equals(name))
+                .map(TraceStep::detail).findFirst().orElse("-");
     }
 }
