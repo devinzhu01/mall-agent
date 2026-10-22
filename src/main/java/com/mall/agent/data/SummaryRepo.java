@@ -20,6 +20,12 @@ public class SummaryRepo {
                 .param(sessionId).query(String.class).optional();
     }
 
+    /** 摘要累计已经覆盖了多少条消息。 */
+    public int coveredCount(String sessionId) {
+        return jdbc.sql("SELECT covered_msg_count FROM conversation_summary WHERE session_id = ?")
+                .param(sessionId).query(Integer.class).optional().orElse(0);
+    }
+
     public void save(String sessionId, String userId, String summary, int coveredCount) {
         int updated = jdbc.sql("UPDATE conversation_summary SET summary=?, covered_msg_count=?, "
                         + "updated_at=CURRENT_TIMESTAMP WHERE session_id=?")

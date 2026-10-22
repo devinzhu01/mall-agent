@@ -17,7 +17,7 @@ agent:
   mode: multi                     # multi=Router+专家;single=单 Agent(评测对照)
   router-model: qwen-turbo        # Router 只做分类,用便宜的小模型
   tool: { max-failures: 3 }       # 单次请求内工具失败上限,超过后让模型向用户澄清
-  memory: { window-messages: 20, summarize-threshold: 16, keep-recent: 6, ttl-minutes: 120 }
+  memory: { window-messages: 20, summarize-threshold: 16, keep-recent: 6, ttl-minutes: 120, max-chars: 6000 }
   rag:
     collection: mall_kb
     qdrant-host: localhost

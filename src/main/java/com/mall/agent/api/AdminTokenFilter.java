@@ -1,6 +1,6 @@
 package com.mall.agent.api;
 
-import com.mall.agent.config.AgentProperties;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,8 +18,8 @@ public class AdminTokenFilter extends OncePerRequestFilter {
 
     private final byte[] expected;
 
-    public AdminTokenFilter(AgentProperties props) {
-        this.expected = props.getAdminToken().getBytes(StandardCharsets.UTF_8);
+    public AdminTokenFilter(@Value("${agent.admin-token:change-me}") String adminToken) {
+        this.expected = adminToken.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override

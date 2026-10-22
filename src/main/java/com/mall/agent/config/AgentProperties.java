@@ -25,6 +25,7 @@ public class AgentProperties {
         private int summarizeThreshold = 16;
         private int keepRecent = 6;
         private int ttlMinutes = 120;
+        private int maxChars = 6000;   // 注入上下文的历史字符上限(token 的粗略代理)
     }
 
     /** 开关可在评测里临时改写,用来做消融对比。 */

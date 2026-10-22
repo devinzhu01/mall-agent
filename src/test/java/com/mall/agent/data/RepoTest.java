@@ -95,5 +95,7 @@ class RepoTest {
         summaries.save("s1", "u1001", "第一版摘要", 10);
         summaries.save("s1", "u1001", "第二版摘要", 20);
         assertThat(summaries.get("s1")).contains("第二版摘要");
+        assertThat(summaries.coveredCount("s1")).isEqualTo(20);
+        assertThat(summaries.coveredCount("none")).isZero();
     }
 }
