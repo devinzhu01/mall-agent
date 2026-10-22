@@ -7,4 +7,9 @@ public record Hit(String chunkId, String docId, int version, String titlePath,
     public Hit withScore(double newScore) {
         return new Hit(chunkId, docId, version, titlePath, text, parentText, newScore);
     }
+
+    /** 命中子块后展开成父块:text 换成整个小节,回答时模型看到的是完整条款。 */
+    public Hit expanded() {
+        return new Hit(chunkId, docId, version, titlePath, parentText, parentText, score);
+    }
 }
