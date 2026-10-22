@@ -35,7 +35,8 @@ agent:
     rerank-url: https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank
     embedding-batch-size: 10
     sync-on-startup: true
-    upload-dir: ./kb-uploads
+    upload-dir: ./kb-uploads        # 管理接口上传的文件目录,结构同 kb-dir
+    kb-dir: src/main/resources/kb   # 内置知识库目录:<类别>/<docId>__v<N>.<md|docx|pdf>
   logistics: { base-url: "http://localhost:8080/mock/logistics", timeout-ms: 1500, mock-fail-rate: 0.3 }
   admin-token: ${ADMIN_TOKEN:change-me}
   eval: { dataset-dir: src/test/resources/eval, use-cache: true }

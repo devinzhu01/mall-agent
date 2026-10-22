@@ -46,6 +46,7 @@ public class AgentProperties {
         private int embeddingBatchSize = 10;
         private boolean syncOnStartup = true;
         private String uploadDir = "./kb-uploads";
+        private String kbDir = "src/main/resources/kb";
     }
 
     @Data public static class Logistics {
